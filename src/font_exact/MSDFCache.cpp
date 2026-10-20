@@ -95,9 +95,16 @@ std::string MSDFCache::GetCacheBasePath(const char* familyName, const char* styl
     snprintf(hashHex, sizeof(hashHex), "%016llX", static_cast<unsigned long long>(fontHash));
     std::string folderName = fam + "_" + sty + "_" + hashHex + "_s" + std::to_string(sdfRenderSize) + "_sp" + std::to_string(sdfSpread) +
         "_g" + std::to_string(GENERATOR_REVISION);
-    wchar_t tempPath[MAX_PATH] = {};
-    GetTempPathW(MAX_PATH, tempPath);
-    std::filesystem::path base = std::filesystem::path(tempPath) / CACHE_DIR / folderName;
+    // use Wow.exe not Temp
+    char exePath[MAX_PATH] = {};
+    if (!GetModuleFileNameA(nullptr, exePath, MAX_PATH)) {
+        wchar_t tempPath[MAX_PATH] = {};
+        GetTempPathW(MAX_PATH, tempPath);
+        return (std::filesystem::path(tempPath) / CACHE_DIR / folderName).string();
+    }
+
+    std::filesystem::path gameRoot = std::filesystem::path(exePath).parent_path();
+    std::filesystem::path base = gameRoot / CACHE_DIR / folderName;
     return base.string();
 }
 
